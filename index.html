@@ -146,9 +146,10 @@
             let df = 0;
 
             for (let j = 0; j < cashFlow.length; j++) {
-                const factor = Math.pow(1 + rate, j);
-                f += cashFlow[j] / factor;
-                df += -j * cashFlow[j] / Math.pow(1 + rate, j + 1);
+                // 使用年化利率，但考虑月度现金流
+                const monthlyFactor = Math.pow(1 + rate, j/12);
+                f += cashFlow[j] / monthlyFactor;
+                df += -(j/12) * cashFlow[j] / Math.pow(1 + rate, j/12 + 1);
             }
 
             const newRate = rate - f / df;
@@ -207,9 +208,8 @@
                 cashFlow = cashFlow.concat(Array(totalPeriods - n).fill(0));
             }
             
-            // 计算IRR
-            const monthlyIrr = calculateIRRValue(cashFlow);
-            const annualIrr = Math.pow(1 + monthlyIrr, 12) - 1;
+            // 直接计算年化IRR
+            const annualIrr = calculateIRRValue(cashFlow);
             
             // 添加结果到表格
             const row = resultBody.insertRow();
