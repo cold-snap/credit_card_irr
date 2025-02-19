@@ -108,6 +108,10 @@
             </ul>
         </div>
         <div class="form-group">
+            <label for="loanAmount">借款金额：</label>
+            <input type="number" id="loanAmount" min="0" step="100" value="10000">
+        </div>
+        <div class="form-group">
             <label for="totalPeriods">总期数：</label>
             <input type="number" id="totalPeriods" min="12" step="1" value="60">
             <div id="totalPeriodsError" class="error">总期数必须是12的倍数</div>
@@ -121,9 +125,9 @@
         <table id="resultTable">
             <thead>
                 <tr>
-                    <th>还款期数</th>
-                    <th>每期还款金额</th>
-                    <th>月IRR</th>
+                    <th>计划还款期数（提前还款后）</th>
+                    <th id="paymentHeader" style="display: none;">每期还款金额</th>
+                    <th id="lastPaymentHeader" style="display: none;">提前还款月还款金额</th>
                     <th>年化IRR</th>
                 </tr>
             </thead>
@@ -160,6 +164,7 @@
         // 获取输入值
         const totalPeriods = parseInt(document.getElementById('totalPeriods').value);
         const ratePerPeriod = parseFloat(document.getElementById('ratePerPeriod').value) / 100;
+        const loanAmount = parseFloat(document.getElementById('loanAmount').value) || 0;
         
         // 验证总期数是否为12的倍数
         const errorElement = document.getElementById('totalPeriodsError');
@@ -168,6 +173,12 @@
             return;
         }
         errorElement.style.display = 'none';
+        
+        // 显示或隐藏每期还款金额列和提前还款总金额列
+        const paymentHeader = document.getElementById('paymentHeader');
+        const lastPaymentHeader = document.getElementById('lastPaymentHeader');
+        paymentHeader.style.display = loanAmount > 0 ? '' : 'none';
+        lastPaymentHeader.style.display = loanAmount > 0 ? '' : 'none';
         
         // 本金归一化
         const P = 1.0;
@@ -203,11 +214,23 @@
             // 添加结果到表格
             const row = resultBody.insertRow();
             row.insertCell(0).textContent = n;
-            row.insertCell(1).textContent = A.toFixed(4);
-            row.insertCell(2).textContent = (monthlyIrr * 100).toFixed(4) + '%';
-            row.insertCell(3).textContent = (annualIrr * 100).toFixed(4) + '%';
+            
+            // 只有在有借款金额时才显示每期还款金额和提前还款总金额
+            if (loanAmount > 0) {
+                const actualPayment = A * loanAmount;
+                row.insertCell(1).textContent = actualPayment.toFixed(2);
+                
+                // 计算并显示提前还款总金额
+                const lastPayment = n === totalPeriods ? actualPayment : (actualPayment + (P - n * (P / totalPeriods)) * loanAmount);
+                row.insertCell(2).textContent = lastPayment.toFixed(2);
+            }
+            
+            row.insertCell(loanAmount > 0 ? 3 : 1).textContent = (annualIrr * 100).toFixed(4) + '%';
         }
     }
+
+    // 添加借款金额输入框的事件监听
+    document.getElementById('loanAmount').addEventListener('input', calculateIRR);
 
     // 页面加载完成后自动计算一次
     document.addEventListener('DOMContentLoaded', calculateIRR);
