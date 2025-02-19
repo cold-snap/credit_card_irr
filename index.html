@@ -146,10 +146,9 @@
             let df = 0;
 
             for (let j = 0; j < cashFlow.length; j++) {
-                // 使用年化利率，但考虑月度现金流
-                const monthlyFactor = Math.pow(1 + rate, j/12);
+                const monthlyFactor = Math.pow(1 + rate/12, j);
                 f += cashFlow[j] / monthlyFactor;
-                df += -(j/12) * cashFlow[j] / Math.pow(1 + rate, j/12 + 1);
+                df += -j * cashFlow[j] / (12 * Math.pow(1 + rate/12, j + 1));
             }
 
             const newRate = rate - f / df;
@@ -204,11 +203,9 @@
                 // 提前还款：当期还款 + 剩余本金
                 const remainingPrincipal = P - n * (P / totalPeriods);
                 cashFlow.push(-(A + remainingPrincipal));
-                // 填充剩余期数为0
-                cashFlow = cashFlow.concat(Array(totalPeriods - n).fill(0));
             }
             
-            // 直接计算年化IRR
+            // 计算年化IRR
             const annualIrr = calculateIRRValue(cashFlow);
             
             // 添加结果到表格
